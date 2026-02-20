@@ -9,17 +9,17 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.zestindia.productapi.dto.AuthResponse;
 import com.zestindia.productapi.dto.LoginRequest;
-import com.zestindia.productapi.dto.RefreshRequest;
 import com.zestindia.productapi.security.JwtUtil;
-
-import lombok.RequiredArgsConstructor;
 
 @RestController
 @RequestMapping("/auth")
-@RequiredArgsConstructor
 public class AuthController {
 
 	private final JwtUtil jwtUtil;
+
+	public AuthController(JwtUtil jwtUtil) {
+		this.jwtUtil = jwtUtil;
+	}
 
 	@PostMapping("/login")
 	public ResponseEntity<AuthResponse> login(@RequestBody LoginRequest request) {

@@ -8,7 +8,6 @@ import java.util.stream.Collectors;
 
 public class ProductMapper {
 
-	// ================= DTO → ENTITY =================
 	public static Product toEntity(ProductRequestDTO dto) {
 
 		Product product = new Product();
@@ -29,7 +28,6 @@ public class ProductMapper {
 		return product;
 	}
 
-	// ================= ENTITY → DTO =================
 	public static ProductResponseDTO toDTO(Product product) {
 
 		ProductResponseDTO dto = new ProductResponseDTO();

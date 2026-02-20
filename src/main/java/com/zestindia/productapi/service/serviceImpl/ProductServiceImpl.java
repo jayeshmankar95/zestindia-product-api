@@ -66,20 +66,16 @@ public class ProductServiceImpl implements ProductService {
 	@Override
 	public ProductResponseDTO updateProduct(Integer id, ProductRequestDTO dto) {
 
-		// 1️⃣ Fetch existing product
 		Product existingProduct = productRepository.findById(id)
 				.orElseThrow(()  -> new ResourceNotFoundException(
 	                    "Product not found with ID: " + id));
 
-		// 2️⃣ Update basic fields
 		existingProduct.setProductName(dto.getProductName());
 		existingProduct.setModifiedBy(dto.getCreatedBy()); // using same field for simplicity
 		existingProduct.setModifiedOn(LocalDateTime.now());
 
-		// 3️⃣ Clear old items (IMPORTANT)
 		existingProduct.getItems().clear();
 
-		// 4️⃣ Add updated items
 		if (dto.getItems() != null) {
 
 			List<Item> updatedItems = dto.getItems().stream().map(itemDTO -> {
@@ -92,10 +88,8 @@ public class ProductServiceImpl implements ProductService {
 			existingProduct.getItems().addAll(updatedItems);
 		}
 
-		// 5️⃣ Save updated product
 		Product savedProduct = productRepository.save(existingProduct);
 
-		// 6️⃣ Convert to DTO
 		return ProductMapper.toDTO(savedProduct);
 	}
 

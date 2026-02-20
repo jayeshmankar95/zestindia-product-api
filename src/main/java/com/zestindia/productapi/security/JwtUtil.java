@@ -27,50 +27,30 @@ public class JwtUtil {
 		return Keys.hmacShaKeyFor(secret.getBytes());
 	}
 
-	// ================= ACCESS TOKEN =================
-//	public String generateAccessToken(String username) {
-//
-//		return Jwts.builder().subject(username).issuedAt(new Date())
-//				.expiration(new Date(System.currentTimeMillis() + accessExpiration)).signWith(getKey()).compact();
-//	}
 	public String generateAccessToken(String username, String role) {
 
-	    return Jwts.builder()
-	            .subject(username)
-	            .claim("role", role)
-	            .issuedAt(new Date())
-	            .expiration(new Date(System.currentTimeMillis() + accessExpiration))
-	            .signWith(getKey())
-	            .compact();
+		return Jwts.builder().subject(username).claim("role", role).issuedAt(new Date())
+				.expiration(new Date(System.currentTimeMillis() + accessExpiration)).signWith(getKey()).compact();
 	}
-	
-	//Extract Role
+
 	public String extractRole(String token) {
 
-	    return Jwts.parser()
-	            .verifyWith((SecretKey) getKey())
-	            .build()
-	            .parseSignedClaims(token)
-	            .getPayload()
-	            .get("role", String.class);
+		return Jwts.parser().verifyWith((SecretKey) getKey()).build().parseSignedClaims(token).getPayload().get("role",
+				String.class);
 	}
 
-
-	// ================= REFRESH TOKEN =================
 	public String generateRefreshToken(String username) {
 
 		return Jwts.builder().subject(username).issuedAt(new Date())
 				.expiration(new Date(System.currentTimeMillis() + refreshExpiration)).signWith(getKey()).compact();
 	}
 
-	// ================= EXTRACT USER =================
 	public String extractUsername(String token) {
 
 		return Jwts.parser().verifyWith((SecretKey) getKey()).build().parseSignedClaims(token).getPayload()
 				.getSubject();
 	}
 
-	// ================= VALIDATE =================
 	public boolean validateToken(String token) {
 		try {
 			Jwts.parser().verifyWith((SecretKey) getKey()).build().parseSignedClaims(token);
