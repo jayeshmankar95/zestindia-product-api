@@ -1,0 +1,14 @@
+CREATE TABLE users (
+    id BIGINT PRIMARY KEY AUTO_INCREMENT,
+    username VARCHAR(100) NOT NULL UNIQUE,
+    password VARCHAR(255) NOT NULL,
+    role VARCHAR(50) NOT NULL,
+    enabled BOOLEAN DEFAULT TRUE
+);
+
+CREATE TABLE refresh_token (
+    id BIGINT PRIMARY KEY AUTO_INCREMENT,
+    token VARCHAR(500) NOT NULL,
+    username VARCHAR(100) NOT NULL,
+    expiry_date TIMESTAMP NOT NULL
+);

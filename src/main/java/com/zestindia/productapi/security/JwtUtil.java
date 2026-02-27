@@ -1,62 +1,65 @@
 package com.zestindia.productapi.security;
 
-import java.security.Key;
-import java.util.Date;
-
-import javax.crypto.SecretKey;
-
-import org.springframework.beans.factory.annotation.Value;
+import io.jsonwebtoken.*;
+import io.jsonwebtoken.security.Keys;
 import org.springframework.stereotype.Component;
 
-import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.security.Keys;
+import java.security.Key;
+import java.util.Date;
 
 @Component
 public class JwtUtil {
 
-	@Value("${jwt.secret}")
-	private String secret;
+    private final String SECRET =
+            "myVerySecretKeyThatIsAtLeast32CharactersLong12345";
 
-	@Value("${jwt.access.expiration}")
-	private long accessExpiration;
+    private final long ACCESS_EXP = 1000 * 60 * 15; // 15 min
+    private final long REFRESH_EXP = 1000 * 60 * 60 * 24; // 1 day
 
-	@Value("${jwt.refresh.expiration}")
-	private long refreshExpiration;
+    private Key getSigningKey() {
+        return Keys.hmacShaKeyFor(SECRET.getBytes());
+    }
 
-	private Key getKey() {
-		return Keys.hmacShaKeyFor(secret.getBytes());
-	}
+    public String generateAccessToken(String username, String role) {
 
-	public String generateAccessToken(String username, String role) {
+        return Jwts.builder()
+                .setSubject(username)
+                .claim("role", role)
+                .setIssuedAt(new Date())
+                .setExpiration(
+                        new Date(System.currentTimeMillis() + ACCESS_EXP))
+                .signWith(getSigningKey(), SignatureAlgorithm.HS256)
+                .compact();
+    }
 
-		return Jwts.builder().subject(username).claim("role", role).issuedAt(new Date())
-				.expiration(new Date(System.currentTimeMillis() + accessExpiration)).signWith(getKey()).compact();
-	}
+    public String generateRefreshToken(String username) {
 
-	public String extractRole(String token) {
+        return Jwts.builder()
+                .setSubject(username)
+                .setIssuedAt(new Date())
+                .setExpiration(
+                        new Date(System.currentTimeMillis() + REFRESH_EXP))
+                .signWith(getSigningKey(), SignatureAlgorithm.HS256)
+                .compact();
+    }
 
-		return Jwts.parser().verifyWith((SecretKey) getKey()).build().parseSignedClaims(token).getPayload().get("role",
-				String.class);
-	}
+    public String extractUsername(String token) {
 
-	public String generateRefreshToken(String username) {
+        return Jwts.parserBuilder()
+                .setSigningKey(getSigningKey())
+                .build()
+                .parseClaimsJws(token)
+                .getBody()
+                .getSubject();
+    }
 
-		return Jwts.builder().subject(username).issuedAt(new Date())
-				.expiration(new Date(System.currentTimeMillis() + refreshExpiration)).signWith(getKey()).compact();
-	}
+    public String extractRole(String token) {
 
-	public String extractUsername(String token) {
-
-		return Jwts.parser().verifyWith((SecretKey) getKey()).build().parseSignedClaims(token).getPayload()
-				.getSubject();
-	}
-
-	public boolean validateToken(String token) {
-		try {
-			Jwts.parser().verifyWith((SecretKey) getKey()).build().parseSignedClaims(token);
-			return true;
-		} catch (Exception e) {
-			return false;
-		}
-	}
+        return Jwts.parserBuilder()
+                .setSigningKey(getSigningKey())
+                .build()
+                .parseClaimsJws(token)
+                .getBody()
+                .get("role", String.class);
+    }
 }

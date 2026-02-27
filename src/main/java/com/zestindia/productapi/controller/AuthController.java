@@ -1,40 +1,48 @@
 package com.zestindia.productapi.controller;
 
-import org.springframework.http.HttpStatus;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.security.crypto.password.PasswordEncoder;
 
-import com.zestindia.productapi.dto.AuthResponse;
-import com.zestindia.productapi.dto.LoginRequest;
+import com.zestindia.productapi.dto.*;
+import com.zestindia.productapi.entity.User;
+import com.zestindia.productapi.repository.UserRepository;
 import com.zestindia.productapi.security.JwtUtil;
+import com.zestindia.productapi.service.RefreshTokenService;
 
 @RestController
 @RequestMapping("/auth")
 public class AuthController {
 
+	private final UserRepository userRepository;
+	private final PasswordEncoder passwordEncoder;
 	private final JwtUtil jwtUtil;
+	private final RefreshTokenService refreshTokenService;
 
-	public AuthController(JwtUtil jwtUtil) {
+	public AuthController(UserRepository userRepository, PasswordEncoder passwordEncoder, JwtUtil jwtUtil,
+			RefreshTokenService refreshTokenService) {
+		this.userRepository = userRepository;
+		this.passwordEncoder = passwordEncoder;
 		this.jwtUtil = jwtUtil;
+		this.refreshTokenService = refreshTokenService;
 	}
 
 	@PostMapping("/login")
 	public ResponseEntity<AuthResponse> login(@RequestBody LoginRequest request) {
 
-		if ("admin".equals(request.getUsername()) && "admin123".equals(request.getPassword())) {
+		User user = userRepository.findByUsername(request.getUsername())
+				.orElseThrow(() -> new RuntimeException("User not found"));
 
-			String role = request.getRole(); // ADMIN or USER
-
-			String access = jwtUtil.generateAccessToken(request.getUsername(), role);
-			String refresh = jwtUtil.generateRefreshToken(request.getUsername());
-
-			return ResponseEntity.ok(new AuthResponse(access, refresh));
+		if (!passwordEncoder.matches(request.getPassword(), user.getPassword())) {
+			throw new RuntimeException("Invalid password");
 		}
 
-		return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
-	}
+		String access = jwtUtil.generateAccessToken(user.getUsername(), user.getRole());
 
+		String refresh = jwtUtil.generateRefreshToken(user.getUsername());
+
+		refreshTokenService.save(refresh, user.getUsername());
+
+		return ResponseEntity.ok(new AuthResponse(access, refresh));
+	}
 }
